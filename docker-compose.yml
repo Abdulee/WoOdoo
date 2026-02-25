@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: woodoo-postgres
+    environment:
+      POSTGRES_USER: woodoo
+      POSTGRES_PASSWORD: woodoo
+      POSTGRES_DB: woodoo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U woodoo -d woodoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - woodoo-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: woodoo-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - woodoo-network
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: woodoo-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://woodoo:woodoo@postgres:5432/woodoo
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: your-secret-key-change-in-production
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: changeme
+      ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+      ENVIRONMENT: development
+    volumes:
+      - ./backend:/app/backend
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - woodoo-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: woodoo-worker
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      DATABASE_URL: postgresql+asyncpg://woodoo:woodoo@postgres:5432/woodoo
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: your-secret-key-change-in-production
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: changeme
+      ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+      ENVIRONMENT: development
+    volumes:
+      - ./backend:/app/backend
+    command: celery -A backend.celery_app worker --loglevel=info
+    networks:
+      - woodoo-network
+
+  beat:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: woodoo-beat
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      DATABASE_URL: postgresql+asyncpg://woodoo:woodoo@postgres:5432/woodoo
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: your-secret-key-change-in-production
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: changeme
+      ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+      ENVIRONMENT: development
+    volumes:
+      - ./backend:/app/backend
+    command: celery -A backend.celery_app beat --loglevel=info
+    networks:
+      - woodoo-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - app
+    networks:
+      - woodoo-network
+
+volumes:
+  postgres_data:
+
+networks:
+  woodoo-network:
+    driver: bridge
