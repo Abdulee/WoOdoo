@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
+import { apiGet } from '@/lib/api'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { EmptyState } from '@/components/ui/EmptyState'
 import {
@@ -18,8 +19,14 @@ import {
   XCircle,
   Info,
 } from 'lucide-react'
+import type {
+  ConnectionResponse,
+  SyncJobResponse,
+  SyncExecutionResponse,
+  PaginatedResponse,
+} from '../../types/api'
 
-/* ─── Types (inline, no external import) ─── */
+/* ─── Types (inline, for UI shape) ─── */
 
 interface ConnectionStatus {
   name: string
@@ -51,20 +58,27 @@ interface LastSyncInfo {
   status: 'completed' | 'failed'
 }
 
-/* ─── Mock data (placeholder — will be replaced by API in Task 33) ─── */
+/* ─── Helpers ─── */
 
-const MOCK_CONNECTIONS: ConnectionStatus[] = []
+function formatRelativeTime(isoString: string): string {
+  const diff = Date.now() - new Date(isoString).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  return `${Math.floor(hours / 24)}d ago`
+}
 
-const MOCK_STATS: StatCard[] = [
-  { label: 'Products Synced', value: '—', icon: RefreshCw, accent: 'var(--primary)' },
-  { label: 'Pending Sync', value: '—', icon: Clock, accent: 'var(--secondary)' },
-  { label: 'Needs Review', value: '—', icon: AlertTriangle, accent: 'var(--destructive)' },
-  { label: 'Scheduled Jobs', value: '—', icon: CalendarClock, accent: 'var(--muted-foreground)' },
-]
-
-const MOCK_ACTIVITY: ActivityEvent[] = []
-
-const MOCK_LAST_SYNC: LastSyncInfo | null = null
+function formatDuration(startedAt: string, completedAt?: string): string {
+  if (!completedAt) return 'running...'
+  const diff = new Date(completedAt).getTime() - new Date(startedAt).getTime()
+  const secs = Math.floor(diff / 1000)
+  if (secs < 60) return `${secs}s`
+  const mins = Math.floor(secs / 60)
+  const remainSecs = secs % 60
+  return `${mins}m ${remainSecs}s`
+}
 
 /* ─── Sub-components ─── */
 
@@ -104,12 +118,76 @@ function StatusBadge({ status }: { status: ActivityEvent['status'] }) {
 /* ─── Dashboard Page ─── */
 
 export default function DashboardPage() {
-  const [connections] = useState<ConnectionStatus[]>(MOCK_CONNECTIONS)
-  const [stats] = useState<StatCard[]>(MOCK_STATS)
-  const [activity] = useState<ActivityEvent[]>(MOCK_ACTIVITY)
-  const [lastSync] = useState<LastSyncInfo | null>(MOCK_LAST_SYNC)
+  // Fetch connections
+  const { data: connectionsData, isLoading: connectionsLoading } = useQuery({
+    queryKey: ['connections'],
+    queryFn: () => apiGet<PaginatedResponse<ConnectionResponse>>('/api/connections'),
+  })
+
+  // Fetch jobs
+  const { data: jobsData, isLoading: jobsLoading } = useQuery({
+    queryKey: ['jobs'],
+    queryFn: () => apiGet<PaginatedResponse<SyncJobResponse>>('/api/jobs'),
+  })
+
+  // Find the most recent job to fetch executions for
+  const firstJobId = jobsData?.items?.[0]?.id
+  const { data: executionsData, isLoading: executionsLoading } = useQuery({
+    queryKey: ['executions', firstJobId],
+    queryFn: () => apiGet<SyncExecutionResponse[]>(`/api/jobs/${firstJobId}/executions`),
+    enabled: !!firstJobId,
+  })
+
+  const isLoading = connectionsLoading || jobsLoading
+
+  // Map ConnectionResponse → ConnectionStatus
+  const connections: ConnectionStatus[] = (connectionsData?.items ?? []).map((conn) => ({
+    name: conn.name,
+    platform: conn.platform as 'odoo' | 'woocommerce',
+    status: conn.is_active ? 'connected' : 'disconnected',
+    lastChecked: conn.last_tested_at ? formatRelativeTime(conn.last_tested_at) : null,
+  }))
+
+  // Compute stat card values from real data
+  const enabledJobCount = jobsData?.items?.filter((j) => j.is_enabled).length ?? 0
+  const latestExecution = executionsData?.[0] ?? null
+  const productsSynced = latestExecution?.synced_count ?? 0
+
+  const stats: StatCard[] = [
+    { label: 'Products Synced', value: isLoading ? '...' : productsSynced, icon: RefreshCw, accent: 'var(--primary)' },
+    { label: 'Pending Sync', value: isLoading ? '...' : 0, icon: Clock, accent: 'var(--secondary)' },
+    { label: 'Needs Review', value: isLoading ? '...' : 0, icon: AlertTriangle, accent: 'var(--destructive)' },
+    { label: 'Scheduled Jobs', value: isLoading ? '...' : enabledJobCount, icon: CalendarClock, accent: 'var(--muted-foreground)' },
+  ]
+
+  // Activity feed — empty for now (no dedicated activity endpoint)
+  const activity: ActivityEvent[] = []
+
+  // Build last sync info from most recent execution
+  let lastSync: LastSyncInfo | null = null
+  if (latestExecution) {
+    const jobForExecution = jobsData?.items?.find((j) => j.id === latestExecution.job_id)
+    lastSync = {
+      timestamp: formatRelativeTime(latestExecution.started_at),
+      duration: formatDuration(latestExecution.started_at, latestExecution.completed_at),
+      jobName: jobForExecution?.name ?? `Job #${latestExecution.job_id}`,
+      status: latestExecution.status === 'completed' ? 'completed' : 'failed',
+    }
+  }
 
   const hasConnections = connections.length > 0
+
+  // Show loading state while initial data loads
+  if (isLoading && !connectionsData && !jobsData) {
+    return (
+      <PageContainer className="flex flex-col items-center justify-center min-h-[80vh]">
+        <div className="flex items-center gap-3">
+          <RefreshCw size={20} className="animate-spin" style={{ color: 'var(--muted-foreground)' }} />
+          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Loading dashboard...</p>
+        </div>
+      </PageContainer>
+    )
+  }
 
   /* Full-page empty state when no connections exist */
   if (!hasConnections) {
@@ -241,7 +319,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat) => {
             const Icon = stat.icon
-            const isEmpty = stat.value === '—' || stat.value === 0
+            const isEmpty = stat.value === '—' || stat.value === 0 || stat.value === '...'
             return (
               <div
                 key={stat.label}
@@ -305,7 +383,14 @@ export default function DashboardPage() {
               borderColor: 'var(--border)',
             }}
           >
-            {lastSync ? (
+            {executionsLoading ? (
+              <div className="flex flex-col items-center justify-center h-full py-6 text-center">
+                <RefreshCw size={24} className="animate-spin" style={{ color: 'var(--muted-foreground)', opacity: 0.5 }} />
+                <p className="mt-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                  Loading...
+                </p>
+              </div>
+            ) : lastSync ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Activity size={16} style={{ color: 'var(--primary)' }} />
