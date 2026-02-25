@@ -60,3 +60,10 @@ build/
 
 # Celery
 celerybeat-schedule
+
+# Next.js
+.next/
+
+# SQLite test artifacts
+*.db
+*.sqlite
