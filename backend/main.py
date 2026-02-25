@@ -17,6 +17,7 @@ from backend.auth import router as auth_router, JWTMiddleware, initialize_admin_
 from backend.auth.router import limiter
 from backend.models.database import init_db
 from backend.api import connections_router
+from backend.jobs import jobs_router
 
 logger = logging.getLogger(__name__)
 
@@ -190,6 +191,9 @@ app.include_router(auth_router)
 
 # Include connections routes
 app.include_router(connections_router, prefix="/api")
+
+# Include jobs routes
+app.include_router(jobs_router, prefix="/api")
 
 
 if __name__ == "__main__":
