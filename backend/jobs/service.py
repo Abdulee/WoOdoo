@@ -1,10 +1,15 @@
-"""Business logic layer for Job CRUD operations"""
+"""Business logic layer for Job CRUD operations
+
+Integrates with Celery Beat scheduler so that jobs with schedule_config
+automatically register/unregister from Beat when created, updated, or deleted.
+"""
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.jobs.schemas import JobCreate, JobUpdate
 from backend.models.orm import SyncJob, SyncExecution, ExecutionStatusEnum
+from backend.tasks.scheduler import register_job_schedule, remove_job_schedule
 
 
 async def create_job(db: AsyncSession, job_data: JobCreate) -> SyncJob:
@@ -22,6 +27,14 @@ async def create_job(db: AsyncSession, job_data: JobCreate) -> SyncJob:
     db.add(job)
     await db.commit()
     await db.refresh(job)
+
+    # Register with Celery Beat if schedule is configured and job is enabled
+    if job.schedule_config and job.is_enabled:
+        try:
+            register_job_schedule(job.id, job.schedule_config)
+        except Exception:
+            pass  # Don't fail job creation if Beat registration fails
+
     return job
 
 
@@ -67,6 +80,16 @@ async def update_job(db: AsyncSession, job_id: int, job_data: JobUpdate) -> Sync
 
     await db.commit()
     await db.refresh(job)
+
+    # Update Beat schedule based on current state
+    if job.is_enabled and job.schedule_config:
+        try:
+            register_job_schedule(job.id, job.schedule_config)
+        except Exception:
+            pass  # Don't fail update if Beat registration fails
+    else:
+        remove_job_schedule(job.id)
+
     return job
 
 
@@ -79,6 +102,10 @@ async def soft_delete_job(db: AsyncSession, job_id: int) -> SyncJob | None:
     job.is_enabled = False
     await db.commit()
     await db.refresh(job)
+
+    # Remove from Celery Beat on soft delete
+    remove_job_schedule(job.id)
+
     return job
 
 

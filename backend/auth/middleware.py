@@ -25,7 +25,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         # Check if path is public
-        if request.url.path in self.PUBLIC_PATHS or request.url.path.startswith("/api/setup/"):
+        if request.url.path in self.PUBLIC_PATHS or request.url.path.startswith("/api/setup/") or request.url.path.startswith("/api/webhooks/"):
             return await call_next(request)
         
         # Check if path requires auth (starts with /api/)

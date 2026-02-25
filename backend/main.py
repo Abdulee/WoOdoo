@@ -18,6 +18,11 @@ from backend.auth.router import limiter
 from backend.models.database import init_db
 from backend.api import connections_router
 from backend.jobs import jobs_router
+from backend.ws import ws_router
+from backend.webhooks import webhooks_router
+from backend.orders import orders_router
+from backend.tasks.review_queue import review_router
+from backend.matching import matching_router
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +200,20 @@ app.include_router(connections_router, prefix="/api")
 # Include jobs routes
 app.include_router(jobs_router, prefix="/api")
 
+# Include WebSocket routes
+app.include_router(ws_router, prefix="/api")
+
+# Include webhooks routes
+app.include_router(webhooks_router, prefix="/api")
+
+# Include review queue routes
+app.include_router(review_router, prefix="/api")
+
+# Include orders routes
+app.include_router(orders_router, prefix="/api")
+
+# Include matching routes
+app.include_router(matching_router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn

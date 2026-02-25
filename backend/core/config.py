@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Environment
     environment: str = "development"
     
+    # Webhook secrets
+    wc_webhook_secret: str = ""
+    odoo_webhook_secret: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = False

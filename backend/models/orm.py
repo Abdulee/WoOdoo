@@ -59,6 +59,8 @@ class SyncStatusEnum(str, PyEnum):
     PENDING = "pending"
     FAILED = "failed"
     REVIEW = "review"
+    FAILED_PERMANENT = "failed_permanent"
+    DISMISSED = "dismissed"
 
 
 class ExecutionStatusEnum(str, PyEnum):
@@ -170,6 +172,7 @@ class ProductMapping(Base):
         default=SyncStatusEnum.PENDING,
         nullable=False,
     )
+    match_method: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     last_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
@@ -282,6 +285,9 @@ class SyncLog(Base):
     product_mapping_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("product_mappings.id"), nullable=True
     )
+    status: Mapped[Optional[str]] = mapped_column(
+        Enum(SyncStatusEnum, native_enum=False), nullable=True
+    )
     level: Mapped[str] = mapped_column(
         Enum(LogLevelEnum, native_enum=False), nullable=False
     )
@@ -290,6 +296,7 @@ class SyncLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )
+    retry_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     # Relationships
     execution: Mapped["SyncExecution"] = relationship("SyncExecution", back_populates="logs")
