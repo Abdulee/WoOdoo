@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { PageContainer } from '@/components/layout/PageContainer'
-import { apiGet, apiPost } from '@/lib/api'
-import type { ConnectionResponse } from '../../../../types/api'
+import { apiGet, apiPut } from '@/lib/api'
+import type { ConnectionResponse, SyncJobResponse } from '../../../../../types/api'
 
 // ─── Local form types (match API body shape) ───────────────────────
 
@@ -683,13 +683,74 @@ function buildJobBody(form: JobFormState) {
   }
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────
+// ─── Helpers to parse existing job into form state ─────────────────
 
-export default function NewSyncJobPage() {
+function jobToFormState(job: SyncJobResponse): JobFormState {
+  // Parse filters — the API may return FilterConfig or FilterRule[]
+  let filters: FilterRule[] = []
+  if (Array.isArray(job.filters)) {
+    filters = job.filters as unknown as FilterRule[]
+  }
+
+  // Parse field mappings
+  let field_mappings: FieldMappingRule[] = [...DEFAULT_MAPPINGS]
+  if (job.field_mappings && job.field_mappings.length > 0) {
+    field_mappings = job.field_mappings.map((m) => ({
+      odoo_field: m.odoo_field,
+      wc_field: m.wc_field,
+      direction: m.direction as FieldMappingRule['direction'],
+      transform: m.transform,
+    }))
+  }
+
+  // Parse schedule
+  let schedule_type: ScheduleType = 'manual'
+  let cron_expression = ''
+  let interval_seconds = 3600
+  if (job.schedule_config) {
+    if (job.schedule_config.cron_expression) {
+      schedule_type = 'cron'
+      cron_expression = job.schedule_config.cron_expression
+    } else if (job.schedule_config.interval_minutes) {
+      schedule_type = 'interval'
+      interval_seconds = job.schedule_config.interval_minutes * 60
+    } else if (job.schedule_config.trigger === 'interval') {
+      schedule_type = 'interval'
+    } else if (job.schedule_config.trigger === 'cron') {
+      schedule_type = 'cron'
+    }
+  }
+
+  // sync_direction: the API uses `direction` field on SyncJobResponse
+  const dir = job.direction as SyncDirection
+  const sync_direction: SyncDirection =
+    dir === 'odoo_to_wc' || dir === 'wc_to_odoo' || dir === 'bidirectional'
+      ? dir
+      : 'bidirectional'
+
+  return {
+    name: job.name,
+    description: '',
+    connection_id: job.connection_id ?? null,
+    sync_direction,
+    filters,
+    field_mappings,
+    schedule_type,
+    cron_expression,
+    interval_seconds,
+    is_enabled: job.is_enabled,
+  }
+}
+
+// ─── Main Edit Page ────────────────────────────────────────────────
+
+export default function EditJobPage({ params }: { params: { id: string } }) {
   const router = useRouter()
+  const jobId = params.id
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [loaded, setLoaded] = useState(false)
 
   const [form, setForm] = useState<JobFormState>({
     name: '',
@@ -704,12 +765,28 @@ export default function NewSyncJobPage() {
     is_enabled: true,
   })
 
+  // Load existing job
+  const { data: job } = useQuery<SyncJobResponse>({
+    queryKey: ['job', jobId],
+    queryFn: () => apiGet<SyncJobResponse>(`/api/jobs/${jobId}`),
+    retry: false,
+  })
+
+  // Load connections
   const { data: connectionsData } = useQuery<{ items: ConnectionResponse[]; total: number }>({
     queryKey: ['connections-list'],
     queryFn: () => apiGet<{ items: ConnectionResponse[]; total: number }>('/api/connections'),
     retry: false,
   })
   const connections = connectionsData?.items ?? []
+
+  // Pre-populate form when job loads
+  useEffect(() => {
+    if (job && !loaded) {
+      setForm(jobToFormState(job))
+      setLoaded(true)
+    }
+  }, [job, loaded])
 
   const validateStep = (s: number): boolean => {
     const errs: Record<string, string> = {}
@@ -731,21 +808,31 @@ export default function NewSyncJobPage() {
     setSaving(true)
     try {
       const body = buildJobBody(form)
-      await apiPost('/api/jobs', body)
+      await apiPut(`/api/jobs/${jobId}`, body)
       router.push('/jobs')
     } catch {
       setSaving(false)
     }
   }
 
+  if (!job) {
+    return (
+      <PageContainer>
+        <div className="flex items-center justify-center py-20">
+          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Loading job…</p>
+        </div>
+      </PageContainer>
+    )
+  }
+
   return (
     <PageContainer>
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
-          New Sync Job
+          Edit Sync Job
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>
-          Configure and create a new bidirectional product sync job.
+          Update the configuration of &ldquo;{job.name}&rdquo;.
         </p>
       </div>
 
@@ -804,7 +891,7 @@ export default function NewSyncJobPage() {
               onMouseEnter={(e) => { if (!saving) e.currentTarget.style.filter = 'brightness(1.15)' }}
               onMouseLeave={(e) => { e.currentTarget.style.filter = 'brightness(1)' }}
             >
-              {saving ? 'Saving…' : 'Save Job'}
+              {saving ? 'Saving…' : 'Update Job'}
             </button>
           )}
         </div>
