@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Settings, Copy, Check, Heart, Info, Save, Webhook, Loader2 } from 'lucide-react'
+import { Settings, Copy, Check, Heart, Info, Save, Webhook, Loader2, Activity } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { apiGet, apiPost } from '@/lib/api'
 
@@ -17,6 +17,25 @@ interface WebhookHealth {
   woocommerce: WebhookHealthEntry
   odoo: WebhookHealthEntry
 }
+
+interface ConnectionItem {
+  id: number
+  name: string
+  platform: 'odoo' | 'woocommerce'
+  is_active: boolean
+}
+
+interface ConnHealthResult {
+  connection_id: number
+  odoo_ok: boolean | null
+  wc_ok: boolean | null
+  odoo_latency_ms: number | null
+  wc_latency_ms: number | null
+  odoo_error: string | null
+  wc_error: string | null
+  checked_at: string
+}
+
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -217,6 +236,35 @@ export default function SettingsPage() {
     }
   }, [settings])
 
+  // ── Load connections for health check ────────────────────────
+  const { data: connectionsData } = useQuery<{ items: ConnectionItem[] } | null>({
+    queryKey: ['connections'],
+    queryFn: async () => {
+      try {
+        return await apiGet<{ items: ConnectionItem[] }>('/api/connections')
+      } catch {
+        return null
+      }
+    },
+  })
+
+  // ── Connection health check state ─────────────────────────────
+  const [connHealth, setConnHealth] = useState<Record<number, ConnHealthResult | 'loading'>>({})
+
+  const handleConnHealthCheck = async (connId: number) => {
+    setConnHealth((prev) => ({ ...prev, [connId]: 'loading' }))
+    try {
+      const result = await apiGet<ConnHealthResult>(`/api/connections/${connId}/health`)
+      setConnHealth((prev) => ({ ...prev, [connId]: result }))
+    } catch {
+      setConnHealth((prev) => {
+        const next = { ...prev }
+        delete next[connId]
+        return next
+      })
+    }
+  }
+
   // ── Save customer ID ──────────────────────────────────────────
   const handleSaveCustomerId = async () => {
     setSaveStatus('saving')
@@ -350,6 +398,91 @@ export default function SettingsPage() {
           )}
         </SettingsCard>
 
+        {/* ── Connection Health Check ────────────────────────────── */}
+        <SettingsCard
+          icon={Activity}
+          title="Connection Health"
+          subtitle="Test connectivity and latency for each connection"
+          accentColor="#6366f1"
+        >
+          {connectionsData?.items && connectionsData.items.length > 0 ? (
+            <div className="space-y-3">
+              {connectionsData.items.map((conn) => {
+                const hr = connHealth[conn.id]
+                const isChecking = hr === 'loading'
+                const healthData = typeof hr === 'object' ? hr : null
+                const isOk = healthData
+                  ? (conn.platform === 'odoo' ? healthData.odoo_ok : healthData.wc_ok)
+                  : null
+                const latency = healthData
+                  ? (conn.platform === 'odoo' ? healthData.odoo_latency_ms : healthData.wc_latency_ms)
+                  : null
+                return (
+                  <div
+                    key={conn.id}
+                    className="flex items-center justify-between rounded-lg px-4 py-3"
+                    style={{
+                      background: 'var(--muted)',
+                      border: '1px solid var(--border)',
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <HealthDot healthy={isOk === true} />
+                      <div>
+                        <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                          {conn.name}
+                        </span>
+                        {latency !== null && (
+                          <span className="ml-2 text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                            {latency}ms
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleConnHealthCheck(conn.id)}
+                      disabled={isChecking}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all"
+                      style={{
+                        background: isOk === true
+                          ? 'color-mix(in srgb, #10b981 15%, transparent)'
+                          : isOk === false
+                            ? 'color-mix(in srgb, #ef4444 15%, transparent)'
+                            : 'var(--muted)',
+                        color: isOk === true
+                          ? '#10b981'
+                          : isOk === false
+                            ? '#ef4444'
+                            : 'var(--muted-foreground)',
+                        border: '1px solid var(--border)',
+                        cursor: isChecking ? 'not-allowed' : 'pointer',
+                        opacity: isChecking ? 0.7 : 1,
+                      }}
+                    >
+                      {isChecking ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Heart size={12} />
+                      )}
+                      {isChecking ? 'Checking…' : isOk === true ? 'Healthy' : isOk === false ? 'Unhealthy' : 'Check Health'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div
+              className="rounded-lg px-4 py-3 text-sm"
+              style={{
+                background: 'var(--muted)',
+                border: '1px solid var(--border)',
+                color: 'var(--muted-foreground)',
+              }}
+            >
+              No connections configured. Add connections first to check their health.
+            </div>
+          )}
+        </SettingsCard>
         {/* ── Order Sync Settings ────────────────────────────────── */}
         <SettingsCard
           icon={Save}

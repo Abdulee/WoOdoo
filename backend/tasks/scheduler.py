@@ -168,3 +168,53 @@ def schedule_execute_sync_job(self, job_id: int):
             "schedule_execute_sync_job failed for job %d: %s", job_id, exc
         )
         raise self.retry(exc=exc)
+
+
+# ---------------------------------------------------------------------------
+# Periodic connection health check task (every 5 minutes)
+# ---------------------------------------------------------------------------
+
+_HEALTH_CHECK_TASK_NAME = "backend.tasks.scheduler.check_all_connections_health"
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=1,
+    default_retry_delay=30,
+    name=_HEALTH_CHECK_TASK_NAME,
+)
+def check_all_connections_health_task(self):
+    """Periodic task: run health checks for all active connections."""
+    import asyncio
+
+    async def _run_health_checks() -> None:
+        from backend.models.database import AsyncSessionLocal
+        from backend.connections.health import run_health_check_all
+
+        async with AsyncSessionLocal() as db:
+            results = await run_health_check_all(db)
+            healthy = sum(
+                1 for r in results
+                if (r.odoo_ok is True or r.wc_ok is True)
+            )
+            logger.info(
+                "Health check complete: %d/%d connections healthy",
+                healthy, len(results),
+            )
+
+    try:
+        asyncio.run(_run_health_checks())
+    except Exception as exc:
+        logger.error("check_all_connections_health_task failed: %s", exc)
+        raise self.retry(exc=exc)
+
+
+# Register the health check in Beat schedule
+if not hasattr(celery_app.conf, "beat_schedule") or celery_app.conf.beat_schedule is None:
+    celery_app.conf.beat_schedule = {}
+
+celery_app.conf.beat_schedule["connection_health_check"] = {
+    "task": _HEALTH_CHECK_TASK_NAME,
+    "schedule": timedelta(minutes=5),
+    "args": [],
+}

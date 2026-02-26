@@ -5,6 +5,7 @@ import { QueryProvider } from '@/providers/QueryProvider'
 import { WebSocketProvider } from '@/lib/websocket'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
+import { SetupGuard } from '@/components/SetupGuard'
 
 const geist = Geist({
   variable: '--font-geist-sans',
@@ -31,7 +32,9 @@ export default function RootLayout({
               <div className="flex flex-col flex-1 overflow-hidden">
                 <Header />
                 <main className="flex-1 overflow-auto">
-                  {children}
+                  <SetupGuard>
+                    {children}
+                  </SetupGuard>
                 </main>
               </div>
             </div>

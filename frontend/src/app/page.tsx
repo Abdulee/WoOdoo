@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { apiGet } from '@/lib/api'
@@ -18,6 +19,8 @@ import {
   CheckCircle2,
   XCircle,
   Info,
+  Heart,
+  Loader2,
 } from 'lucide-react'
 import type {
   ConnectionResponse,
@@ -28,7 +31,19 @@ import type {
 
 /* ─── Types (inline, for UI shape) ─── */
 
+interface HealthResult {
+  connection_id: number
+  odoo_ok: boolean | null
+  wc_ok: boolean | null
+  odoo_latency_ms: number | null
+  wc_latency_ms: number | null
+  odoo_error: string | null
+  wc_error: string | null
+  checked_at: string
+}
+
 interface ConnectionStatus {
+  id: number
   name: string
   platform: 'odoo' | 'woocommerce'
   status: 'connected' | 'disconnected' | 'unconfigured'
@@ -142,11 +157,29 @@ export default function DashboardPage() {
 
   // Map ConnectionResponse → ConnectionStatus
   const connections: ConnectionStatus[] = (connectionsData?.items ?? []).map((conn) => ({
+    id: conn.id,
     name: conn.name,
     platform: conn.platform as 'odoo' | 'woocommerce',
     status: conn.is_active ? 'connected' : 'disconnected',
     lastChecked: conn.last_tested_at ? formatRelativeTime(conn.last_tested_at) : null,
   }))
+
+  // Health check state per connection
+  const [healthResults, setHealthResults] = useState<Record<number, HealthResult | 'loading'>>({})
+
+  const handleCheckHealth = async (connId: number) => {
+    setHealthResults((prev) => ({ ...prev, [connId]: 'loading' }))
+    try {
+      const result = await apiGet<HealthResult>(`/api/connections/${connId}/health`)
+      setHealthResults((prev) => ({ ...prev, [connId]: result }))
+    } catch {
+      setHealthResults((prev) => {
+        const next = { ...prev }
+        delete next[connId]
+        return next
+      })
+    }
+  }
 
   // Compute stat card values from real data
   const enabledJobCount = jobsData?.items?.filter((j) => j.is_enabled).length ?? 0
@@ -268,25 +301,63 @@ export default function DashboardPage() {
           Connection Health
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {connections.map((conn) => (
+          {connections.map((conn) => {
+            const hr = healthResults[conn.id]
+            const isChecking = hr === 'loading'
+            const healthData = typeof hr === 'object' ? hr : null
+            const isOk = healthData
+              ? (conn.platform === 'odoo' ? healthData.odoo_ok : healthData.wc_ok)
+              : null
+            const latency = healthData
+              ? (conn.platform === 'odoo' ? healthData.odoo_latency_ms : healthData.wc_latency_ms)
+              : null
+            return (
             <div
-              key={conn.name}
+              key={conn.id}
               className="flex items-center gap-3 px-4 py-3 rounded-lg border"
               style={{
                 background: 'var(--card)',
                 borderColor: 'var(--border)',
               }}
             >
-              <ConnectionDot status={conn.status} />
+              <ConnectionDot status={isOk === true ? 'connected' : isOk === false ? 'disconnected' : conn.status} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" style={{ color: 'var(--foreground)' }}>
                   {conn.name}
                 </p>
                 <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
                   {conn.platform === 'odoo' ? 'Odoo' : 'WooCommerce'}
+                  {latency !== null ? ` · ${latency}ms` : ''}
                   {conn.lastChecked ? ` · Checked ${conn.lastChecked}` : ' · Never checked'}
                 </p>
               </div>
+              <button
+                onClick={() => handleCheckHealth(conn.id)}
+                disabled={isChecking}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all"
+                style={{
+                  background: isOk === true
+                    ? 'rgba(34,197,94,0.12)'
+                    : isOk === false
+                      ? 'rgba(239,68,68,0.12)'
+                      : 'var(--muted)',
+                  color: isOk === true
+                    ? '#22c55e'
+                    : isOk === false
+                      ? '#ef4444'
+                      : 'var(--muted-foreground)',
+                  border: '1px solid var(--border)',
+                  cursor: isChecking ? 'not-allowed' : 'pointer',
+                  opacity: isChecking ? 0.7 : 1,
+                }}
+              >
+                {isChecking ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Heart size={12} />
+                )}
+                {isChecking ? 'Checking…' : isOk === true ? 'Healthy' : isOk === false ? 'Unhealthy' : 'Check'}
+              </button>
               <span
                 className="text-xs font-medium px-2 py-0.5 rounded-full capitalize"
                 style={{
@@ -307,7 +378,8 @@ export default function DashboardPage() {
                 {conn.status}
               </span>
             </div>
-          ))}
+            )
+          })}
         </div>
       </section>
 

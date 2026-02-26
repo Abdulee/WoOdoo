@@ -23,6 +23,8 @@ from backend.webhooks import webhooks_router
 from backend.orders import orders_router
 from backend.tasks.review_queue import review_router
 from backend.matching import matching_router
+from backend.setup.router import router as setup_router
+from backend.connections.health_router import health_router
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +216,12 @@ app.include_router(orders_router, prefix="/api")
 
 # Include matching routes
 app.include_router(matching_router, prefix="/api")
+
+# Include setup wizard routes
+app.include_router(setup_router, prefix="/api")
+
+# Include connection health routes
+app.include_router(health_router, prefix="/api")
 
 if __name__ == "__main__":
     import uvicorn
