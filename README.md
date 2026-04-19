@@ -214,4 +214,4 @@ git push
 
 ## License
 
-MIT
+GNU General Public License v3.0 (GPLv3). See [LICENSE](LICENSE).
