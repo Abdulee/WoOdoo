@@ -24,11 +24,12 @@ export function SyncProgressOverlay({ progress, onDismiss }: SyncProgressOverlay
   // Animate in/out
   useEffect(() => {
     if (shouldShow) {
-      // Trigger mount, then animate in on next frame
       const raf = requestAnimationFrame(() => setVisible(true))
       return () => cancelAnimationFrame(raf)
     } else {
-      setVisible(false)
+      queueMicrotask(() => {
+        setVisible(false)
+      })
     }
   }, [shouldShow])
 
@@ -51,7 +52,9 @@ export function SyncProgressOverlay({ progress, onDismiss }: SyncProgressOverlay
   // Reset dismissed state when a new sync starts
   useEffect(() => {
     if (progress.status === 'running') {
-      setDismissed(false)
+      queueMicrotask(() => {
+        setDismissed(false)
+      })
     }
   }, [progress.status])
 

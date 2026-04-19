@@ -783,8 +783,10 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
   // Pre-populate form when job loads
   useEffect(() => {
     if (job && !loaded) {
-      setForm(jobToFormState(job))
-      setLoaded(true)
+      queueMicrotask(() => {
+        setForm(jobToFormState(job))
+        setLoaded(true)
+      })
     }
   }, [job, loaded])
 
@@ -827,8 +829,14 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
 
   return (
     <PageContainer>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+      <div
+        className="mb-6 rounded-2xl border p-5 sm:p-6"
+        style={{
+          background: 'linear-gradient(120deg, color-mix(in srgb, var(--primary) 14%, transparent) 0%, color-mix(in srgb, var(--secondary) 10%, transparent) 100%)',
+          borderColor: 'color-mix(in srgb, var(--primary) 28%, var(--border))',
+        }}
+      >
+        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>
           Edit Sync Job
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>

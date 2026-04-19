@@ -257,21 +257,29 @@ export default function DashboardPage() {
 
   return (
     <PageContainer>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div
+        className="mb-8 rounded-2xl border p-5 sm:p-6"
+        style={{
+          background: 'linear-gradient(120deg, color-mix(in srgb, var(--primary) 14%, transparent) 0%, color-mix(in srgb, var(--secondary) 10%, transparent) 100%)',
+          borderColor: 'color-mix(in srgb, var(--primary) 28%, var(--border))',
+        }}
+      >
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+          <p className="text-xs uppercase tracking-[0.16em]" style={{ color: 'var(--muted-foreground)' }}>
+            Operations
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>
             Dashboard
           </h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--muted-foreground)' }}>
-            Overview of sync health, recent jobs, and connection status.
+            Sync health, execution insights, and connection readiness.
           </p>
         </div>
-        {/* Quick Actions */}
         <div className="flex items-center gap-3">
           <Link
             href="/jobs"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
             style={{
               background: 'var(--primary)',
               color: 'var(--primary-foreground)',
@@ -282,11 +290,11 @@ export default function DashboardPage() {
           </Link>
           <Link
             href="/jobs/new"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors"
             style={{
-              borderColor: 'var(--border)',
+              borderColor: 'color-mix(in srgb, var(--secondary) 35%, var(--border))',
               color: 'var(--foreground)',
-              background: 'transparent',
+              background: 'color-mix(in srgb, var(--secondary) 10%, transparent)',
             }}
           >
             <Plus size={15} />
@@ -294,9 +302,9 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+      </div>
 
-      {/* Connection Health */}
-      <section className="mb-6">
+      <section className="mb-7">
         <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted-foreground)' }}>
           Connection Health
         </h2>
@@ -314,10 +322,10 @@ export default function DashboardPage() {
             return (
             <div
               key={conn.id}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg border"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl border"
               style={{
-                background: 'var(--card)',
-                borderColor: 'var(--border)',
+                background: 'color-mix(in srgb, var(--card) 90%, #0f172a 10%)',
+                borderColor: 'color-mix(in srgb, var(--border) 80%, transparent)',
               }}
             >
               <ConnectionDot status={isOk === true ? 'connected' : isOk === false ? 'disconnected' : conn.status} />
@@ -334,19 +342,19 @@ export default function DashboardPage() {
               <button
                 onClick={() => handleCheckHealth(conn.id)}
                 disabled={isChecking}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all"
                 style={{
                   background: isOk === true
-                    ? 'rgba(34,197,94,0.12)'
+                    ? 'color-mix(in srgb, var(--status-success) 16%, transparent)'
                     : isOk === false
-                      ? 'rgba(239,68,68,0.12)'
+                      ? 'color-mix(in srgb, var(--status-error) 16%, transparent)'
                       : 'var(--muted)',
                   color: isOk === true
-                    ? '#22c55e'
+                    ? 'var(--status-success)'
                     : isOk === false
-                      ? '#ef4444'
+                      ? 'var(--status-error)'
                       : 'var(--muted-foreground)',
-                  border: '1px solid var(--border)',
+                  borderColor: 'var(--border)',
                   cursor: isChecking ? 'not-allowed' : 'pointer',
                   opacity: isChecking ? 0.7 : 1,
                 }}
@@ -363,15 +371,15 @@ export default function DashboardPage() {
                 style={{
                   background:
                     conn.status === 'connected'
-                      ? 'rgba(34,197,94,0.12)'
+                      ? 'color-mix(in srgb, var(--status-success) 16%, transparent)'
                       : conn.status === 'disconnected'
-                        ? 'rgba(239,68,68,0.12)'
+                        ? 'color-mix(in srgb, var(--status-error) 16%, transparent)'
                         : 'rgba(107,114,128,0.12)',
                   color:
                     conn.status === 'connected'
-                      ? '#22c55e'
+                      ? 'var(--status-success)'
                       : conn.status === 'disconnected'
-                        ? '#ef4444'
+                        ? 'var(--status-error)'
                         : '#6b7280',
                 }}
               >
@@ -383,7 +391,6 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Stat Cards */}
       <section className="mb-6">
         <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted-foreground)' }}>
           Sync Overview
@@ -395,13 +402,12 @@ export default function DashboardPage() {
             return (
               <div
                 key={stat.label}
-                className="relative overflow-hidden rounded-lg border px-4 py-4"
+                className="relative overflow-hidden rounded-xl border px-4 py-4"
                 style={{
-                  background: 'var(--card)',
-                  borderColor: 'var(--border)',
+                  background: 'linear-gradient(180deg, color-mix(in srgb, var(--card) 92%, transparent) 0%, color-mix(in srgb, var(--muted) 36%, transparent) 100%)',
+                  borderColor: 'color-mix(in srgb, var(--border) 82%, transparent)',
                 }}
               >
-                {/* Accent bar */}
                 <div
                   className="absolute top-0 left-0 w-full h-0.5"
                   style={{ background: isEmpty ? 'var(--border)' : (stat.accent ?? 'var(--primary)') }}
@@ -409,20 +415,20 @@ export default function DashboardPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p
-                      className="text-xs font-medium uppercase tracking-wide mb-1"
+                      className="text-[11px] font-medium uppercase tracking-[0.12em] mb-1"
                       style={{ color: 'var(--muted-foreground)' }}
                     >
                       {stat.label}
                     </p>
                     <p
-                      className="text-2xl font-bold tabular-nums"
+                      className="text-2xl font-semibold tabular-nums"
                       style={{ color: isEmpty ? 'var(--muted-foreground)' : 'var(--foreground)' }}
                     >
                       {stat.value}
                     </p>
                   </div>
                   <div
-                    className="p-2 rounded-md"
+                    className="p-2 rounded-lg"
                     style={{
                       background: isEmpty
                         ? 'var(--muted)'
@@ -441,18 +447,16 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Last Sync + Activity in a 2-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Last Sync Card */}
         <section className="lg:col-span-1">
           <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted-foreground)' }}>
             Last Sync
           </h2>
           <div
-            className="rounded-lg border p-5 h-[calc(100%-2rem)]"
+            className="rounded-xl border p-5 h-[calc(100%-2rem)]"
             style={{
-              background: 'var(--card)',
-              borderColor: 'var(--border)',
+              background: 'color-mix(in srgb, var(--card) 92%, transparent)',
+              borderColor: 'color-mix(in srgb, var(--border) 82%, transparent)',
             }}
           >
             {executionsLoading ? (
@@ -496,16 +500,15 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Recent Activity Feed */}
         <section className="lg:col-span-2">
           <h2 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--muted-foreground)' }}>
             Recent Activity
           </h2>
           <div
-            className="rounded-lg border overflow-hidden"
+            className="rounded-xl border overflow-hidden"
             style={{
-              background: 'var(--card)',
-              borderColor: 'var(--border)',
+              background: 'color-mix(in srgb, var(--card) 92%, transparent)',
+              borderColor: 'color-mix(in srgb, var(--border) 82%, transparent)',
             }}
           >
             {activity.length > 0 ? (

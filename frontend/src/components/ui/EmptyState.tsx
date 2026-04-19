@@ -19,27 +19,34 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center py-16 px-4 text-center',
+        'flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border',
         className
       )}
+      style={{
+        background: 'color-mix(in srgb, var(--muted) 45%, transparent)',
+        borderColor: 'color-mix(in srgb, var(--border) 82%, transparent)',
+      }}
     >
       {Icon && (
         <div
-          className="mb-4 p-4 rounded-full"
-          style={{ background: 'var(--muted)' }}
+          className="mb-4 p-4 rounded-2xl"
+          style={{
+            background: 'color-mix(in srgb, var(--primary) 14%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--primary) 30%, transparent)',
+          }}
         >
-          <Icon size={32} style={{ color: 'var(--muted-foreground)' }} />
+          <Icon size={30} style={{ color: 'var(--primary)' }} />
         </div>
       )}
-      <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
+      <h3 className="text-xl font-semibold mb-2 tracking-tight" style={{ color: 'var(--foreground)' }}>
         {title}
       </h3>
       {description && (
-        <p className="text-sm max-w-sm" style={{ color: 'var(--muted-foreground)' }}>
+        <p className="text-sm max-w-md leading-relaxed" style={{ color: 'var(--muted-foreground)' }}>
           {description}
         </p>
       )}
-      {children && <div className="mt-6">{children}</div>}
+      {children && <div className="mt-7">{children}</div>}
     </div>
   )
 }

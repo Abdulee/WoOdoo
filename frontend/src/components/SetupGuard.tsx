@@ -21,14 +21,17 @@ export function SetupGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isExcluded) {
-      setChecked(true)
+      queueMicrotask(() => {
+        setChecked(true)
+      })
       return
     }
 
     const token = getToken()
     if (!token) {
-      // Not logged in — let the normal auth flow handle it
-      setChecked(true)
+      queueMicrotask(() => {
+        setChecked(true)
+      })
       return
     }
 
@@ -40,12 +43,17 @@ export function SetupGuard({ children }: { children: React.ReactNode }) {
         if (data.is_first_run) {
           router.replace('/setup')
         } else {
-          setChecked(true)
+          queueMicrotask(() => {
+            setChecked(true)
+          })
         }
       })
       .catch(() => {
-        // On error (e.g., network), allow through — don't block the app
-        if (!cancelled) setChecked(true)
+        if (!cancelled) {
+          queueMicrotask(() => {
+            setChecked(true)
+          })
+        }
       })
 
     return () => {
@@ -54,7 +62,6 @@ export function SetupGuard({ children }: { children: React.ReactNode }) {
   }, [pathname, isExcluded, router])
 
   if (!checked && !isExcluded) {
-    // Show nothing while checking — prevents flash of content
     return null
   }
 

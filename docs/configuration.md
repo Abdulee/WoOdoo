@@ -1,6 +1,45 @@
 # Configuration
 
-All configuration is done through environment variables. Copy `.env.example` to `.env` and edit the values.
+Infrastructure/runtime configuration is done through environment variables. Copy `.env.example` to `.env` and edit the values.
+
+Connection credentials for Odoo and WooCommerce are configured from the web UI (Setup Wizard or Connections page) after startup.
+
+## Quick Setup Checklist
+
+1. Copy `.env.example` to `.env`
+2. Run `bash scripts/generate-keys.sh --write`
+3. Set `ADMIN_PASSWORD` to a strong password
+4. Start services with `docker compose up -d`
+5. Open `http://localhost:3000` and complete Setup Wizard
+
+## How to Obtain Connection Credentials
+
+### Odoo API key
+
+1. Log in to Odoo with an admin or integration user
+2. Open user preferences/profile settings
+3. Navigate to API keys
+4. Create a new API key for WoOdoo integration
+5. Copy and store the generated key securely
+
+You will use these values in WoOdoo:
+- Odoo URL
+- Database name
+- Username
+- API key
+
+### WooCommerce REST API keys
+
+1. In WordPress admin, go to WooCommerce → Settings → Advanced → REST API
+2. Add key
+3. Set permissions to Read/Write
+4. Generate key
+5. Copy Consumer Key and Consumer Secret
+
+You will use these values in WoOdoo:
+- Store URL
+- Consumer key
+- Consumer secret
 
 ## Environment Variables
 

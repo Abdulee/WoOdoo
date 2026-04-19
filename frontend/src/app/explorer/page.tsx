@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { PageContainer } from '@/components/layout/PageContainer'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { apiGet, apiPost, getAuthHeaders } from '@/lib/api'
+import { apiGet, apiPost } from '@/lib/api'
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -424,11 +424,16 @@ export default function ProductExplorerPage() {
 
   return (
     <PageContainer>
-      {/* Page Header */}
-      <div className="mb-6">
+      <div
+        className="mb-6 rounded-2xl border p-5 sm:p-6"
+        style={{
+          background: 'linear-gradient(120deg, color-mix(in srgb, var(--primary) 14%, transparent) 0%, color-mix(in srgb, var(--secondary) 10%, transparent) 100%)',
+          borderColor: 'color-mix(in srgb, var(--primary) 28%, var(--border))',
+        }}
+      >
         <div className="flex items-center gap-3 mb-2">
           <span style={{ color: 'var(--primary)' }}><ArrowLeftRight size={28} /></span>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+          <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>
             Product Explorer
           </h1>
         </div>

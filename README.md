@@ -1,5 +1,9 @@
 # WoOdoo
 
+<p align="center">
+  <img src="frontend/public/woodoo-logo.png" alt="WoOdoo logo" width="120" />
+</p>
+
 **Bidirectional product sync between Odoo 18 and WooCommerce.**
 
 WoOdoo connects your Odoo ERP with your WooCommerce store, keeping products, categories, images, stock levels, and orders in sync — automatically. Configure sync jobs through a modern web UI, get real-time progress via WebSocket, and let scheduled tasks handle the rest.
@@ -48,8 +52,8 @@ WoOdoo connects your Odoo ERP with your WooCommerce store, keeping products, cat
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/your-org/woodoo.git
-cd woodoo
+git clone git@github.com:Abdulee/WoOdoo.git
+cd WoOdoo
 
 # Copy the example environment file
 cp .env.example .env
@@ -106,6 +110,15 @@ docker compose ps
 
 ## Usage Overview
 
+If this is your first time using WoOdoo, the fastest working path is:
+
+1. Start services with Docker Compose
+2. Log in at `http://localhost:3000`
+3. Complete Setup Wizard (`/setup`)
+4. Create your first sync job
+5. Trigger a manual run from **Sync Jobs**
+6. Monitor progress from Dashboard + Sync Logs
+
 ### Connections
 
 Add your Odoo and WooCommerce credentials. WoOdoo encrypts all secrets at rest with Fernet and tests connectivity (including WordPress Media API access for image sync).
@@ -130,10 +143,59 @@ Create jobs that define:
 
 For existing catalogs that overlap, use auto-match (SKU↔barcode) or manual linking through the Explorer page.
 
+## Practical Lab (Optional)
+
+For hands-on testing, the repository includes `practical-lab/` with a disposable local stack:
+
+- Odoo 18 on `http://localhost:18069`
+- WordPress on `http://localhost:18080`
+- WooCommerce plugin installed in WordPress (compatible version pinned)
+
+Use it only for local QA and experimentation.
+
+```bash
+cd practical-lab
+podman compose up -d
+podman compose ps
+```
+
+Smoke checks:
+
+```bash
+curl -I http://localhost:18069/web/login
+curl -I http://localhost:18080/wp-login.php
+curl -I http://localhost:18080/wp-json/
+```
+
+When finished:
+
+```bash
+podman compose down
+```
+
+The practical lab is isolated from the main WoOdoo app stack and should not be used for production.
+
+## GitHub Push
+
+If your local repository is not yet connected to GitHub:
+
+```bash
+git remote add origin git@github.com:Abdulee/WoOdoo.git
+git branch -M main
+git push -u origin main
+```
+
+If the remote is already configured, use:
+
+```bash
+git push
+```
+
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
+| [Getting Started](docs/getting-started.md) | Fastest path from clone to first successful sync |
 | [Architecture](docs/architecture.md) | System design, data flow, service topology |
 | [Deployment](docs/deployment.md) | Docker Compose setup, production configuration |
 | [Configuration](docs/configuration.md) | All environment variables and settings |

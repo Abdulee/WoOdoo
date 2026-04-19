@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { PageContainer } from '@/components/layout/PageContainer'
@@ -740,8 +740,14 @@ export default function NewSyncJobPage() {
 
   return (
     <PageContainer>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+      <div
+        className="mb-6 rounded-2xl border p-5 sm:p-6"
+        style={{
+          background: 'linear-gradient(120deg, color-mix(in srgb, var(--primary) 14%, transparent) 0%, color-mix(in srgb, var(--secondary) 10%, transparent) 100%)',
+          borderColor: 'color-mix(in srgb, var(--primary) 28%, var(--border))',
+        }}
+      >
+        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>
           New Sync Job
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>

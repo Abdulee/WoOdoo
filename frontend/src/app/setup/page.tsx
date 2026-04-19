@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Rocket, Plug, ShoppingCart, DollarSign, Briefcase, CheckCircle2, Loader2, XCircle, AlertTriangle, ArrowRight, ArrowLeft, ShieldCheck } from 'lucide-react'
-import { apiGet, apiPost } from '@/lib/api'
+import { apiPost } from '@/lib/api'
 import type {
   ConnectionTestResult,
   OdooConnectionConfig,
@@ -911,9 +911,8 @@ export default function SetupPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--background)' }}>
-      {/* Header */}
       <div className="text-center pt-8 pb-2">
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>
           Setup Wizard
         </h1>
         <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground)' }}>

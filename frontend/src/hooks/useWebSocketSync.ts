@@ -175,7 +175,19 @@ export function useWebSocketSync(): {
         retriesRef.current += 1
         retryTimeoutRef.current = setTimeout(() => {
           if (executionIdRef.current !== null) {
-            connectWs(executionIdRef.current)
+            if (executionIdRef.current === null) return
+            const token = getToken()
+            if (!token) return
+
+            const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'
+            const url = `${wsUrl}/api/ws/sync?token=${token}`
+            const retryWs = new WebSocket(url)
+            wsRef.current = retryWs
+
+            retryWs.onopen = ws.onopen
+            retryWs.onmessage = ws.onmessage
+            retryWs.onerror = ws.onerror
+            retryWs.onclose = ws.onclose
           }
         }, RETRY_DELAY_MS)
       }

@@ -160,13 +160,16 @@ function CopyButton({ text }: { text: string }) {
 // ─── Webhook URL Row ────────────────────────────────────────────────
 
 function WebhookUrlRow({ label, url }: { label: string; url: string }) {
+  const inputId = `webhook-url-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+      <label htmlFor={inputId} className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
         {label}
       </label>
       <div className="flex items-center gap-2">
         <input
+          id={inputId}
+          name={inputId}
           type="text"
           readOnly
           value={url}
@@ -232,7 +235,9 @@ export default function SettingsPage() {
   // Populate customer ID from settings
   useEffect(() => {
     if (settings && typeof settings === 'object' && 'default_customer_id' in settings) {
-      setCustomerId(String(settings.default_customer_id ?? ''))
+      queueMicrotask(() => {
+        setCustomerId(String(settings.default_customer_id ?? ''))
+      })
     }
   }, [settings])
 
@@ -284,11 +289,16 @@ export default function SettingsPage() {
   // ── Render ────────────────────────────────────────────────────
   return (
     <PageContainer>
-      {/* Page Header */}
-      <div className="mb-8">
+      <div
+        className="mb-8 rounded-2xl border p-5 sm:p-6"
+        style={{
+          background: 'linear-gradient(120deg, color-mix(in srgb, var(--primary) 14%, transparent) 0%, color-mix(in srgb, var(--secondary) 10%, transparent) 100%)',
+          borderColor: 'color-mix(in srgb, var(--primary) 28%, var(--border))',
+        }}
+      >
         <div className="flex items-center gap-3 mb-2">
           <Settings size={28} style={{ color: 'var(--primary)' }} />
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+          <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>
             Settings
           </h1>
         </div>
@@ -491,11 +501,13 @@ export default function SettingsPage() {
           accentColor="#f59e0b"
         >
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+            <label htmlFor="default-customer-id" className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
               Default Customer ID
             </label>
             <div className="flex items-center gap-2">
               <input
+                id="default-customer-id"
+                name="default-customer-id"
                 type="text"
                 value={customerId}
                 onChange={(e) => setCustomerId(e.target.value)}

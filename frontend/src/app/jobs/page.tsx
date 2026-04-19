@@ -529,15 +529,21 @@ export default function SyncJobsPage() {
   // ── Render ────────────────────────────────────────────────────
   return (
     <PageContainer>
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div
+        className="mb-6 rounded-2xl border p-5 sm:p-6"
+        style={{
+          background: 'linear-gradient(120deg, color-mix(in srgb, var(--primary) 14%, transparent) 0%, color-mix(in srgb, var(--secondary) 10%, transparent) 100%)',
+          borderColor: 'color-mix(in srgb, var(--primary) 28%, var(--border))',
+        }}
+      >
+      <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
             <span style={{ color: 'var(--primary)' }}>
               <Briefcase size={28} />
             </span>
             <h1
-              className="text-2xl font-bold tracking-tight"
+              className="text-3xl font-semibold tracking-tight"
               style={{ color: 'var(--foreground)' }}
             >
               Sync Jobs
@@ -549,7 +555,7 @@ export default function SyncJobsPage() {
         </div>
         <Link
           href="/jobs/new"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
           style={{
             background: 'var(--primary)',
             color: '#fff',
@@ -565,13 +571,13 @@ export default function SyncJobsPage() {
           New Job
         </Link>
       </div>
+      </div>
 
-      {/* Filter Bar */}
       <div
-        className="flex items-center gap-4 px-4 py-3 rounded-lg mb-4"
+        className="flex items-center gap-4 px-4 py-3 rounded-xl mb-4"
         style={{
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
+          background: 'color-mix(in srgb, var(--card) 90%, #0f172a 10%)',
+          border: '1px solid color-mix(in srgb, var(--border) 80%, transparent)',
         }}
       >
         <span style={{ color: 'var(--muted-foreground)' }}>
@@ -640,8 +646,8 @@ export default function SyncJobsPage() {
       <div
         className="rounded-xl overflow-hidden"
         style={{
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
+          background: 'color-mix(in srgb, var(--card) 92%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--border) 82%, transparent)',
         }}
       >
         {/* Table header */}

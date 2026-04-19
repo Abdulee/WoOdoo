@@ -164,11 +164,16 @@ export default function OrdersPage() {
   // ── Render ────────────────────────────────────────────────────────
   return (
     <PageContainer>
-      {/* Page Header */}
-      <div className="mb-8">
+      <div
+        className="mb-8 rounded-2xl border p-5 sm:p-6"
+        style={{
+          background: 'linear-gradient(120deg, color-mix(in srgb, var(--primary) 14%, transparent) 0%, color-mix(in srgb, var(--secondary) 10%, transparent) 100%)',
+          borderColor: 'color-mix(in srgb, var(--primary) 28%, var(--border))',
+        }}
+      >
         <div className="flex items-center gap-3 mb-2">
           <ShoppingCart size={28} style={{ color: 'var(--primary)' }} />
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>
+          <h1 className="text-3xl font-semibold tracking-tight" style={{ color: 'var(--foreground)' }}>
             Order Sync
           </h1>
         </div>

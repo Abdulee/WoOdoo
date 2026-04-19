@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -130,7 +128,7 @@ services:
       - ./backend:/app/backend
     command: celery -A backend.celery_app beat --loglevel=info
     healthcheck:
-      test: ["CMD-SHELL", "celery -A backend.celery_app beat --help >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "pgrep -f 'celery.*beat' > /dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

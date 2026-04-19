@@ -67,3 +67,17 @@ celerybeat-schedule
 # SQLite test artifacts
 *.db
 *.sqlite
+
+# Agent/runtime/internal artifacts
+.sisyphus/
+.sisyphus/evidence/frontend-*.png
+.sisyphus/evidence/*-redesign*.png
+.sisyphus/notepads/mvp-dashboard/
+
+# Local internal orchestrator artifacts
+.sisyphus/boulder.json
+.sisyphus/notepads/woodoo-sync/learnings.md
+
+# Practical local lab state
+practical-lab/.env
+practical-lab/*.log

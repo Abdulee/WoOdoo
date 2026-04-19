@@ -27,7 +27,7 @@ export default function RootLayout({
       <body className={`${geist.variable} antialiased`} style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
         <QueryProvider>
           <WebSocketProvider>
-            <div className="flex h-screen" style={{ background: 'var(--background)' }}>
+            <div className="flex min-h-screen" style={{ background: 'transparent' }}>
               <Sidebar />
               <div className="flex flex-col flex-1 overflow-hidden">
                 <Header />

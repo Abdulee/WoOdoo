@@ -16,11 +16,17 @@ WoOdoo ships with a production-ready Docker Compose configuration that runs all 
 #### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/woodoo.git
-cd woodoo
+git clone git@github.com:Abdulee/WoOdoo.git
+cd WoOdoo
 ```
 
-#### 2. Generate secrets
+#### 2. Create environment file
+
+```bash
+cp .env.example .env
+```
+
+#### 3. Generate secrets
 
 ```bash
 bash scripts/generate-keys.sh --write
@@ -30,12 +36,9 @@ This creates/updates your `.env` file with:
 - `SECRET_KEY` — 32-byte hex string for JWT signing
 - `FERNET_KEY` — Base64-encoded key for credential encryption
 
-#### 3. Configure environment
+#### 4. Configure environment
 
-```bash
-cp .env.example .env
-# Then edit .env with your values
-```
+Edit `.env` with your values.
 
 **Required changes for production:**
 
@@ -54,13 +57,13 @@ ENVIRONMENT=production
 
 See [Configuration](configuration.md) for all available environment variables.
 
-#### 4. Start services
+#### 5. Start services
 
 ```bash
 docker compose up -d
 ```
 
-#### 5. Verify
+#### 6. Verify
 
 ```bash
 # Check all containers are running and healthy
@@ -73,6 +76,16 @@ curl http://localhost:8000/api/health
 docker compose logs app --tail 50
 docker compose logs worker --tail 50
 ```
+
+#### 7. Complete first-time setup in UI
+
+1. Open `http://localhost:3000`
+2. Log in with your admin credentials from `.env`
+3. Complete Setup Wizard:
+   - Odoo connection (URL, database, username, API key)
+   - WooCommerce connection (store URL, consumer key, consumer secret)
+   - Connection tests
+   - Initial sync job creation
 
 ### Service Dependencies
 
