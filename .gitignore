@@ -81,3 +81,12 @@ celerybeat-schedule
 # Practical local lab state
 practical-lab/.env
 practical-lab/*.log
+
+# Keep practical lab and local test artifacts private
+practical-lab/
+backend/tests/
+tests/
+**/*.test.ts
+**/*.spec.ts
+**/test_*.py
+**/*_test.py

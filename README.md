@@ -143,54 +143,6 @@ Create jobs that define:
 
 For existing catalogs that overlap, use auto-match (SKU↔barcode) or manual linking through the Explorer page.
 
-## Practical Lab (Optional)
-
-For hands-on testing, the repository includes `practical-lab/` with a disposable local stack:
-
-- Odoo 18 on `http://localhost:18069`
-- WordPress on `http://localhost:18080`
-- WooCommerce plugin installed in WordPress (compatible version pinned)
-
-Use it only for local QA and experimentation.
-
-```bash
-cd practical-lab
-podman compose up -d
-podman compose ps
-```
-
-Smoke checks:
-
-```bash
-curl -I http://localhost:18069/web/login
-curl -I http://localhost:18080/wp-login.php
-curl -I http://localhost:18080/wp-json/
-```
-
-When finished:
-
-```bash
-podman compose down
-```
-
-The practical lab is isolated from the main WoOdoo app stack and should not be used for production.
-
-## GitHub Push
-
-If your local repository is not yet connected to GitHub:
-
-```bash
-git remote add origin git@github.com:Abdulee/WoOdoo.git
-git branch -M main
-git push -u origin main
-```
-
-If the remote is already configured, use:
-
-```bash
-git push
-```
-
 ## Documentation
 
 | Document | Description |
